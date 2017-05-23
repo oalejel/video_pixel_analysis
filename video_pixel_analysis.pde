@@ -4,6 +4,8 @@ Capture cam;
 
 int lastMillis = 0;
 
+color[][] averageTable = new color[10000][10000];
+
 void setup() {
   //set screen size based on camera res
   size(640, 350);
@@ -30,16 +32,12 @@ void setup() {
 void draw() {
   //if we have data, then go along
   if (cam.available() == true) {
-    
+
     //activate these lines to test fps and efficiency
-    int newMillis = millis();
-    println(newMillis - lastMillis);
-    lastMillis = newMillis;
-    
-    
-    
-    
-    
+    //int newMillis = millis();
+    //println(newMillis - lastMillis);
+    //lastMillis = newMillis;
+
     cam.read();
 
     //draw image
@@ -49,16 +47,17 @@ void draw() {
     image(cam, 0, 0);
     popMatrix();
 
-    color c = samplePixelArea(25,25,50);
-    
-    fill(c);
-    noStroke();
-    rect(25, 25, 50, 50);
+    //color c = samplePixelArea(25,25,50);
+    setAverages(9);
+
+
+    //draw box representing average
+    //fill(c);
+    //noStroke();
+    //rect(25, 25, 50, 50);
 
     loadPixels();
   }
-  
-  
 }
 
 color samplePixelArea(int midX, int midY, int w) {
@@ -66,23 +65,46 @@ color samplePixelArea(int midX, int midY, int w) {
   int gSum = 0;
   int bSum = 0;
   int index = 0;
-  
-    int initialX = midX - int(0.5 * w);
-    int initialY = midY - int(0.5 * w);
-    for (int x = initialX; x < midX + int(0.5 * w); x++) {
-      for (int y = initialY; y < midY + int(0.5 * w); y++) {
-         color c = get(x, y);
-         rSum += c >> 16 & 0xFF;;
-         gSum += c >> 8 & 0xFF;
-         bSum += c & 0xFF;
-         index++;
-      }
+
+  int initialX = midX - int(0.5 * w);
+  int initialY = midY - int(0.5 * w);
+  for (int x = initialX; x < midX + int(0.5 * w); x++) {
+    for (int y = initialY; y < midY + int(0.5 * w); y++) {
+      color c = get(x, y);
+      rSum += c >> 16 & 0xFF;
+      
+      gSum += c >> 8 & 0xFF;
+      bSum += c & 0xFF;
+      index++;
     }
-    return color(rSum / index, gSum / index, bSum / index);
+  }
+  return color(rSum / index, gSum / index, bSum / index);
 }
 
 void keyPressed() {
-  if keyPressed == ' ' {
+  if (key == ' ') {
     println("pressed space");
+    //use space to lock all data for pixel data change
   }
+}  
+
+void setAverages(int boxWidth) {
+  //int numBoxes = (width / boxWidth) * (height / boxWidth);
+
+  for (int column = 0; column <= (width / boxWidth); column++) {
+    for (int row = 0; row <= (height / boxWidth); row++) {
+      //if (column == 1) {return;}
+      int x = (column * boxWidth);
+      int y = (row * boxWidth);
+      color c = samplePixelArea(x + (boxWidth / 2), y + (boxWidth / 2), boxWidth);
+      //averageTable[x][y] = c;
+      drawBox(x, y, boxWidth, c);
+    }
+  }
+}
+
+void drawBox(int x, int y, int w, color c) {
+  fill(c);
+  noStroke();
+  rect(x, y, w, w);
 }
