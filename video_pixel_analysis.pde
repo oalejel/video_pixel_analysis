@@ -2,11 +2,16 @@ import processing.video.*;
 
 Capture cam;
 
+int lastMillis = 0;
+
 void setup() {
+  //set screen size based on camera res
   size(640, 350);
 
+  //get list of connected cameras
   String[] cameras = Capture.list();
 
+  //if we have 0 cameras, exit... else, we print the cameras and continue
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
     exit();
@@ -16,15 +21,25 @@ void setup() {
       println(cameras[i]);
     }
 
-    // The camera can be initialized directly using an 
-    // element from the array returned by list():
+    //use the first camera --> builtin
     cam = new Capture(this, cameras[0]);
     cam.start();
   }
 }
 
 void draw() {
+  //if we have data, then go along
   if (cam.available() == true) {
+    
+    //activate these lines to test fps and efficiency
+    int newMillis = millis();
+    println(newMillis - lastMillis);
+    lastMillis = newMillis;
+    
+    
+    
+    
+    
     cam.read();
 
     //draw image
@@ -64,4 +79,10 @@ color samplePixelArea(int midX, int midY, int w) {
       }
     }
     return color(rSum / index, gSum / index, bSum / index);
+}
+
+void keyPressed() {
+  if keyPressed == ' ' {
+    println("pressed space");
+  }
 }
