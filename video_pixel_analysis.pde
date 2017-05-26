@@ -4,25 +4,21 @@ Capture cam;
 
 int lastMillis = 0;
 
-color[][] averageTable = new color[10000][10000];
+color[][] averageTable = new color[1000][1000];
+color[][] oldAverageTable = new color[1000][1000];
 
 void setup() {
   //set screen size based on camera res
-  size(640, 350);
-
+  size(640, 700);
   //get list of connected cameras
   String[] cameras = Capture.list();
-
-  //if we have 0 cameras, exit... else, we print the cameras and continue
+  //increase framerate if you need fast camera updates?
+  //frameRate(240);
+  //if we have 0 cameras, exit... else, continue and setup
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
     exit();
   } else {
-    println("Available cameras:");
-    for (int i = 0; i < cameras.length; i++) {
-      println(cameras[i]);
-    }
-
     //use the first camera --> builtin
     cam = new Capture(this, cameras[0]);
     cam.start();
@@ -43,18 +39,15 @@ void draw() {
     //draw image
     pushMatrix(); 
     scale(-0.5, 0.5); 
-    translate(-width * 2, 0);
+    translate(-width * 2, height);
     image(cam, 0, 0);
     popMatrix();
 
     //color c = samplePixelArea(25,25,50);
+
     setAverages(9);
 
 
-    //draw box representing average
-    //fill(c);
-    //noStroke();
-    //rect(25, 25, 50, 50);
 
     loadPixels();
   }
@@ -70,9 +63,8 @@ color samplePixelArea(int midX, int midY, int w) {
   int initialY = midY - int(0.5 * w);
   for (int x = initialX; x < midX + int(0.5 * w); x++) {
     for (int y = initialY; y < midY + int(0.5 * w); y++) {
-      color c = get(x, y);
+      color c = get(x, int(height * 0.5) + y);
       rSum += c >> 16 & 0xFF;
-      
       gSum += c >> 8 & 0xFF;
       bSum += c & 0xFF;
       index++;
@@ -89,16 +81,35 @@ void keyPressed() {
 }  
 
 void setAverages(int boxWidth) {
+  oldAverageTable = averageTable;
+
   //int numBoxes = (width / boxWidth) * (height / boxWidth);
 
   for (int column = 0; column <= (width / boxWidth); column++) {
-    for (int row = 0; row <= (height / boxWidth); row++) {
+    for (int row = 0; row <= ((height * 0.5) / boxWidth); row++) {
       //if (column == 1) {return;}
       int x = (column * boxWidth);
       int y = (row * boxWidth);
-      color c = samplePixelArea(x + (boxWidth / 2), y + (boxWidth / 2), boxWidth);
-      //averageTable[x][y] = c;
+      color c = samplePixelArea(x + (boxWidth / 2), (y + (boxWidth / 2)), boxWidth);
+      averageTable[x][y] = c;
       drawBox(x, y, boxWidth, c);
+    }
+  }
+
+  for (int column = 0; column <= (width / boxWidth); column++) {
+    for (int row = 0; row <= ((height * 0.5) / boxWidth); row++) {
+      int x = (column * boxWidth);
+      int y = (row * boxWidth);
+      
+      color newColor = averageTable[x][y];
+      color oldColor = oldAverageTable[x][y];
+      
+      int rDiff = (newColor >> 16 & 0xFF) - (oldColor >> 16 & 0xFF);
+      println(rDiff);
+      if (rDiff > 10) {
+        println("big diff");
+      }
+      
     }
   }
 }
