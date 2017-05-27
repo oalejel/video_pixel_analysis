@@ -1,7 +1,4 @@
 import processing.video.*;
-import java.lang.Object;
-
-Capture cam;
 
 /*
   the big leap in this program would require the implementation of some machine
@@ -10,6 +7,7 @@ Capture cam;
  of error through intelligent observation and calculation of pixel flicker
  */
 
+Capture cam;
 
 color[][] averageTable = new color[1000][1000];
 color[][] oldAverageTable = new color[1000][1000];
