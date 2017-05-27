@@ -5,18 +5,19 @@ Capture cam;
 
 /*
   the big leap in this program would require the implementation of some machine
-  learning level of data analysis where instead of hard coding what the average
-  change of pixel color is acceptable, we statistically measure an acceptable range
-  of error through intelligent observation and calculation of pixel flicker
-*/
+ learning level of data analysis where instead of hard coding what the average
+ change of pixel color is acceptable, we statistically measure an acceptable range
+ of error through intelligent observation and calculation of pixel flicker
+ */
 
 
 color[][] averageTable = new color[1000][1000];
 color[][] oldAverageTable = new color[1000][1000];
 
-int normalizationPeriod = 500; //milliseconds a pixel should stay the same
+int normalizationPeriod = 100; //milliseconds a pixel should stay the same
 long lastMillis = 0;
 int currentCycleMillis = 0;
+int boxWidth = 3;
 
 void setup() {
   //set screen size based on camera res
@@ -58,20 +59,23 @@ void draw() {
     popMatrix();
 
     //color c = samplePixelArea(25,25,50);
-    int boxWidth = 9;
+    
     int currentMillis = millis();
     currentCycleMillis += currentMillis - lastMillis;
-    setAverages(boxWidth);
+
+    boolean shouldNormalize = false;
     if (currentCycleMillis > normalizationPeriod) {
-      normalizeBackground(boxWidth);
-      
+      //normalizeBackground(boxWidth);
       //after about 500 ms, we set old = to the current and then update 
       //must happen at the END of this closure
       copyToOldTable();
       //println(oldAverageTable, averageTable);
+      //println("norm", currentCycleMillis);
       currentCycleMillis = 0;
-      //println("norm");
+      shouldNormalize = true;
     }
+
+    setAverages(boxWidth);
 
     lastMillis = currentMillis;
     loadPixels();
@@ -111,8 +115,8 @@ void copyToOldTable() {
   //oldAverageTable = averageTable;
   int xIndex = 0;
   int yIndex = 0;
-  for (int[] x: averageTable) {
-    for (int y: x) {
+  for (int[] x : averageTable) {
+    for (int y : x) {
       oldAverageTable[xIndex][yIndex] = averageTable[xIndex][yIndex];
       yIndex++;
     }
@@ -131,9 +135,22 @@ void setAverages(int boxWidth) {
       int y = (row * boxWidth);
       color c = samplePixelArea(x + (boxWidth / 2), (y + (boxWidth / 2)), boxWidth);
       averageTable[x][y] = c;
-      //appendAverageColor(x, y, c);
+
+      //if (shouldNormalize) {
+        color oldColor = oldAverageTable[x][y];
+        int redDiff = abs(((c >> 16) & 0xFF) - ((oldColor >> 16) & 0xFF));
+        int greenDiff = abs(((c >> 8) & 0xFF) - ((oldColor >> 8) & 0xFF));
+        int blueDiff = abs((c & 0xFF) - (oldColor & 0xFF));
+        float averagePercent = ((redDiff / 255.0) + (greenDiff / 255.0) + (blueDiff / 255.0)) / 3.0;
+        if (averagePercent > 0.04) {
+          //show green filter
+          c = c & #00FF00;
+        }
+      //}
 
       drawBox(x, y, boxWidth, c);
+
+      //appendAverageColor(x, y, c);
     }
   }
 
@@ -150,32 +167,36 @@ void setAverages(int boxWidth) {
   //}
 }
 
-void normalizeBackground(int boxWidth) {
-  //extract only green if not change to show that there is a lock
+//void normalizeBackground(int boxWidth) {
+//  //extract only green if not change to show that there is a lock
 
-  //c = c & #00FF00;
-  for (int column = 0; column <= (width / boxWidth); column++) {
-    for (int row = 0; row <= ((height * 0.5) / boxWidth); row++) {
-      int x = (column * boxWidth);
-      int y = (row * boxWidth);
-      
-      color currentColor = averageTable[x][y];
-      color oldColor = oldAverageTable[x][y];
-      
-      int redDiff = abs(((currentColor >> 16) & 0xFF) - ((oldColor >> 16) & 0xFF));
-      int greenDiff = abs(((currentColor >> 8) & 0xFF) - ((oldColor >> 8) & 0xFF));
-      int blueDiff = abs((currentColor & 0xFF) - (oldColor & 0xFF));
-      float averagePercent = ((redDiff / 255.0) + (greenDiff / 255.0) + (blueDiff / 255.0)) / 3.0;
-      if (averagePercent > 0.1) {
-        println("big diff");
-      } else {
-        println("not a big diff");
-      }
-      //println(averagePercent);
-      
-    }
-  }
-}
+//  //c = c & #00FF00;
+//  for (int column = 0; column <= (width / boxWidth); column++) {
+//    for (int row = 0; row <= ((height * 0.5) / boxWidth); row++) {
+//      int x = (column * boxWidth);
+//      int y = (row * boxWidth);
+
+//      color currentColor = averageTable[x][y];
+//      color oldColor = oldAverageTable[x][y];
+
+//      int redDiff = abs(((currentColor >> 16) & 0xFF) - ((oldColor >> 16) & 0xFF));
+//      int greenDiff = abs(((currentColor >> 8) & 0xFF) - ((oldColor >> 8) & 0xFF));
+//      int blueDiff = abs((currentColor & 0xFF) - (oldColor & 0xFF));
+//      float averagePercent = ((redDiff / 255.0) + (greenDiff / 255.0) + (blueDiff / 255.0)) / 3.0;
+
+//      //c = c & #00FF00;
+//      drawBox(x, y, boxWidth, c);
+//      if (averagePercent > 0.05) {
+//        println("big diff");
+//      } else {
+//        println("not a big diff");
+//        currentColor =
+//      }
+
+//      //println(averagePercent);
+//    }
+//  }
+//}
 
 
 
