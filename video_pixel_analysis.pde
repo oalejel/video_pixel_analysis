@@ -15,7 +15,7 @@ color[][] oldAverageTable = new color[1000][1000];
 int normalizationPeriod = 100; //milliseconds a pixel should stay the same
 long lastMillis = 0;
 int currentCycleMillis = 0;
-int boxWidth = 3;
+int boxWidth = 9;
 
 void setup() {
   //set screen size based on camera res
